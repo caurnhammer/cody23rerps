@@ -18,12 +18,11 @@ struct Models
     Electrodes::Array
     Predictors::Array
     Sets::Array
-    Quantiles::Bool
 end
 
-function make_models(desc, nondesc, elec, pred; quant = false)
-    models = Models(desc, nondesc, elec, pred, [], quant);
-    Models(models.Descriptors, models.NonDescriptors, models.Electrodes, models.Predictors, pred_sets(models), models.Quantiles);
+function make_models(desc, nondesc, elec, pred)
+    models = Models(desc, nondesc, elec, pred, []);
+    Models(models.Descriptors, models.NonDescriptors, models.Electrodes, models.Predictors, pred_sets(models));
 end
 
 struct Ind
@@ -71,9 +70,7 @@ function process_data(infile, outfile, models; baseline_corr = false, sampling_r
     # Collect component predictor
     if components != false
         # Add an electrode specific component predictors
-        # data = collect_component(data, "TimeWindow", models; tws=time_windows[1], twe=time_windows[2]);
         data = collect_component(data, "N400", models ; tws=300, twe=500);
-        # data = collect_component(data, "P600", models ; tws=600, twe=800);        
         data = collect_component(data, "Segment", models ; tws=0, twe=1200);
     end
     
@@ -85,7 +82,7 @@ function process_data(infile, outfile, models; baseline_corr = false, sampling_r
         data = invert(data, components, models, invert_preds)
     end
 
-    # Turn condition labels to numbers. Set Verbose to show them.
+    # Turn condition labels to numbers. Set verbose to show them.
     if keep_conds == false
         data = transform_conds(data, verbose=true);
     end
@@ -132,6 +129,7 @@ function collect_component(data, name, models ; tws = 300, twe = 500)
         comp = @view data[((data.Timestamp .>= tws) .& (data.Timestamp .<= twe)), vcat([:Subject, :Item, :Timestamp], models.Electrodes)];
         comp = combine(groupby(comp, [:Subject, :Item]), [x => mean => Symbol(x, name) for x in models.Electrodes]);  
         data = innerjoin(data, comp, on = [:Subject, :Item]);
+        
         data
 end
 
@@ -165,80 +163,6 @@ function invert(data, components, models, invert_preds)
     end
     
     data
-end
-
-function process_spr_data(infile, outfile, models; invert_preds = false, conds = false, keep_conds = false, logRT = true) 
-    # Load data from disk
-    data = DataFrame(File(infile));
-
-    # Make ItemNum vs Item coherent across datasets
-    if "ItemNum" in names(data)
-        rename!(data, :ItemNum => :Item);
-    end
-    
-    # Log-transform RT
-    if logRT == true
-        data.logRT = log.(data.ReadingTime)
-    end
-
-    # Pretend that RT regions are ERP timestamps
-    rename!(data, :Region => :Timestamp)
-
-    # Take condition subsets at this point (i.e. before any z-scoring takes place)
-    if conds != false
-        data = data[subset_inds(data, conds),:]
-    end
-
-    # Select columns
-    data.Intercept = ones(nrow(data));
-    data = data[:,vcat(models.Descriptors, models.NonDescriptors, models.Predictors, models.Electrodes)];
-    
-    # Z-standardise predictors
-    data = standardise(data, false, models);
-    
-    # Invert predictors
-    if ((invert_preds != false))
-        data = invert(data, false, models, invert_preds)
-    end
-
-    # Turn condition labels to numbers. Set Verbose to show them.
-    if keep_conds == false
-        data = transform_conds(data, verbose=true);
-    end
-    # Write data to file or return as DataFrame
-    if typeof(outfile) == String
-        write(outfile, data)
-    else
-        sort!(data, [x for x in reverse(models.Descriptors)])
-    end
-end
-
-function exclude_trial(df, lower, upper, lower_rc, upper_rc)
-    df_out = df
-    for s in unique(df[!,:Subject])
-        # subset for current subject
-        dts = df[(df.Subject .== s),:];
-        for i in unique(dts[!,:Item])
-            # subset current item
-            dti = dts[(dts.Item .== i),:];
-            
-            if sum(dti.ReactionTime .=== missing) > 1
-                exc = sum((dti.ReadingTime .> upper) .| (dti.ReadingTime .< lower)) > 0;
-                if exc == true
-                    #print(dti[:,[:ReadingTime]], "\n")
-                    df_out = df_out[.!((df_out.Subject .== s) .& (df_out.Item .== i)),:];
-                end
-            elseif sum(dti.ReactionTime .=== missing) == 0
-                exc = sum((dti.ReadingTime .> upper) .| (dti.ReadingTime .< lower) .| (dti.ReactionTime .> upper_rc) .| (dti.ReactionTime .< lower_rc)) > 0;
-                if exc == true
-                    #print(dti[:,[:ReactionTime, :ReadingTime]], "\n")
-                    df_out = df_out[.!((df_out.Subject .== s) .& (df_out.Item .== i)),:];
-                end
-            end
-        end
-    end
-
-    df_out
 end
 
 function read_data(infile, models)
@@ -303,14 +227,7 @@ function fit_models_components(dt, models, file)
     out_models = []
     for (i, e) in enumerate(models.Electrodes)
         println("Electrode $e ")
-        # models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "Segment")]; quant = models.Quantiles);
-        # models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "Segment")]; quant = models.Quantiles);
-        models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "N400"), Symbol(e, "Segment")]; quant = models.Quantiles);
-        # models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "N400"), Symbol(e, "P600"), Symbol(e, "Segment")]; quant = models.Quantiles);
-        # models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "TimeWindow")]; quant = false);
-        # models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "Segment")]; quant = false);
-        # models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "TimeWindow"), Symbol(e, "Segment")]; quant = false);
-        # models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "N400"), Symbol(e, "P600")]; quant = false);
+        models_e = make_models(models.Descriptors, models.NonDescriptors, [e], [:Intercept, Symbol(e, "N400"), Symbol(e, "Segment")]);
         output = fit_models(dt, models_e, "none")
         if i .== 1
             out_data = output[1]
@@ -491,7 +408,6 @@ function se(x)
     std(x) / sqrt(length(x))
 end
 
-# The sample mean plus or minus 1.96 times its standard error gives ci
 function ci(x)
     1.96 * se(x)
 end
@@ -522,20 +438,7 @@ function write_models(out_models, models, file)
     out_models
 end
 
-function assign_estimate_quantiles(data, models)
-    est_n4 = data[((data.Type .== 2.0) .& (data.Spec .== 2.0)),:]
-    est_n4 = collect_component(est_n4, "N400_est", models; tws=300, twe=500);
-    est_n4.Quantile = levelcode.(cut(est_n4.PzN400_est, 3))
-    data.Condition = repeat(est_n4.Quantile, (2 * length(unique(models.Sets)) + 1))
-
-    data
-end
-
 function write_data(out_data, models, file)
-    if models.Quantiles
-        out_data = assign_estimate_quantiles(out_data, models)
-    end
-
     out_data_cp = out_data[:,:]
     out_data = combine(groupby(out_data_cp, [:Timestamp, :Type, :Spec, :Condition]), [x => mean => x for x in models.Electrodes])
     

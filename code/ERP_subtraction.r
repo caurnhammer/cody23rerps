@@ -39,7 +39,7 @@ ci <- function(vec) {
     1.96 * se(vec)
 }
 
-# Load data of Design 1, baseline condition
+# Load data of Aurnhammer et al. (2021)
 dt <- fread("../data/adsbc21_data.csv")
 elec <- "Pz"
 cond <- c("A", "C")
@@ -79,7 +79,7 @@ gg <- arrangeGrob(p_list[[1]] + labs(x = ""),
                   p_list[[4]] + labs(y = "", title = "") +
                   theme(plot.margin = margin(t = -20, r = 5, b = 0, l = 5)),
         layout_matrix = matrix(1:4, ncol = 2, byrow = TRUE))
-ggsave("../plots/Subtraction/ERP_Design1_randtrials_AC_Pz.pdf", gg,
+ggsave("../plots/Subtraction/adsbc21_randtrials_AC_Pz.pdf", gg,
     device = cairo_pdf, width = 5, height = 5)
   
 ##########################
@@ -93,7 +93,7 @@ dt_c$Pz_CI <- dt_c_s[Condition %in% c("A", "C"), lapply(.SD, ci),
     by = list(Condition, Timestamp), .SDcols = elec][,..elec]
 dt_c$Spec <- dt_c$Condition
 plot_single_elec(dt_c, elec,
-    file = paste0("../plots/Subtraction/ERP_Design1_AC_Pz.pdf"),
+    file = paste0("../plots/Subtraction/adsbc21_AC_Pz.pdf"),
     modus = "Condition", ylims = c(9, -5),
     leg_labs = cond_labels, leg_vals = cond_values)
 
@@ -110,7 +110,7 @@ dt_cond <- merge(dt_cond, n400[, c("Trial", "Quantile")], on = "Trial")
 
 dt_avg <- avg_quart_dt(dt_cond, elec)
 plot_single_elec(dt_avg, elec,
-    file = paste0("../plots/Subtraction/Subtraction_Design1_RawN400_Tertiles.pdf"),
+    file = paste0("../plots/Subtraction/Subtraction_adsbc21_RawN400_Tertiles.pdf"),
     modus = "Quantile", ylims = c(18, -14),
     leg_labs = quart_labels, leg_vals = quart_values)
 
@@ -133,7 +133,7 @@ dt_cond <- merge(dt_cond, n4seg[, c("Trial", "Quantile")], by = "Trial")
 
 dt_avg <- avg_quart_dt(dt_cond, elec)
 plot_single_elec(dt_avg, elec,
-    file = paste0("../plots/Subtraction/Subtraction_Design1_N400minusSegment_Tertiles_AC.pdf"),
+    file = paste0("../plots/Subtraction/Subtraction_adsbc21_N400minusSegment_Tertiles_AC.pdf"),
     modus = "Quantile", ylims = c(18, -14),
     leg_labs = quart_labels, leg_vals = quart_values)
 
@@ -180,6 +180,6 @@ dt_avg$Pz_CI <- dt_s[, lapply(.SD, ci),
     by = list(Condition, Timestamp), .SDcols = elec][,..elec]
 dt_avg$Spec <- dt_avg$Condition
 plot_single_elec(dt_avg, elec,
-    file = paste0("../plots/Subtraction/ERP_dbc19_Pz.pdf"),
+    file = paste0("../plots/Subtraction/dbc19_Pz.pdf"),
     modus = "Condition", ylims = c(9, -5),
     leg_labs = cond_labels, leg_vals = cond_values)
