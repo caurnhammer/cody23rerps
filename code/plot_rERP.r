@@ -83,10 +83,10 @@ plot_grandavg_ci <- function(
     p <- p + geom_hline(yintercept = 0, linetype = "dashed")
     p <- p + geom_vline(xintercept = 0, linetype = "dashed")
     p <- p + theme(panel.background = element_rect(fill = "#FFFFFF",
-                    color = "#000000", size = 0.1, linetype = "solid"),
-                panel.grid.major = element_line(size = 0.3,
+                    color = "#000000", linewidth = 0.1, linetype = "solid"),
+                panel.grid.major = element_line(linewidth = 0.3,
                     linetype = "solid", color = "#A9A9A9"),
-                panel.grid.minor = element_line(size = 0.15,
+                panel.grid.minor = element_line(linewidth = 0.15,
                     linetype = "solid", color = "#A9A9A9"),
             legend.position = "top")
 
@@ -133,7 +133,7 @@ plot_grandavg_ci <- function(
                 labels = leg_labs, values = leg_vals)
         p <- p + scale_fill_manual(name = "Predictor",
                 labels = leg_labs, values = leg_vals)
-        p <- p + geom_point(data=sig_dt,
+        p <- p + geom_point(data = sig_dt,
                     aes(x = Timestamp, y = posit, shape = sig), size = 2)
         p <- p + scale_shape_manual(values = c(32, 108),
                     name = "Corrected p-values",
@@ -214,6 +214,72 @@ plot_single_elec <- function(
        ggsave(file, gg, device = cairo_pdf, width = 3, height = 3)
     } else {
        plotlist[[1]]
+    }
+}
+
+
+# Plot three midline electrodes
+plot_midline <- function(
+    data,
+    e,
+    file = FALSE,
+    title = "ERPs",
+    yunit = paste0("Amplitude (", "\u03BC", "Volt\u29"),
+    ylims = NULL,
+    modus = "Condition",
+    tws = list(c(250, 400), c(600, 1000)),
+    ci = TRUE,
+    leg_labs,
+    leg_vals
+) {
+    if (modus %in% c("Tertile", "Quantile", "Condition")) {
+        cols <- c("Spec", "Timestamp", modus)
+    } else if (modus %in% c("Coefficient", "t-value")) {
+        data[,"Spec"] <- as.factor(data$Spec)
+        cols <- c("Spec", "Timestamp")
+    }
+
+    # Make individual plots
+    plotlist <- vector(mode = "list", length = length(e))
+    if (modus == "t-value") {
+        for (i in 1:length(e)) {
+            varforward <- c(e[i], paste0(e[i], "_CI"), paste0(e[i], "_sig"))
+            plotlist[[i]] <- plot_grandavg_ci(cbind(data[, ..cols],
+                    data[, ..varforward]), e[i], yunit,
+                    ylims, modus, tws, ci = FALSE,
+                    leg_labs = leg_labs, leg_vals = leg_vals)
+        }
+    } else if (modus %in% c("Coefficient", "Tertile")) {
+        for (i in 1:length(e)) {
+            varforward <- c(e[i], paste0(e[i], "_CI"))
+            plotlist[[i]] <- plot_grandavg_ci(cbind(data[, ..cols],
+                    data[, ..varforward]), e[i], yunit = yunit,
+                    ylims = ylims, modus = modus, ci = ci,
+                    leg_labs = leg_labs, leg_vals = leg_vals)
+        }
+    } else if (modus %in% c("Tertile", "Quantile", "Condition")) {
+        for (i in 1:length(e)) {
+            varforward <- c(e[i], paste0(e[i], "_CI"))
+            plotlist[[i]] <- plot_grandavg_ci(cbind(data[, ..cols],
+                    data[, ..varforward]), e[i], yunit = yunit,
+                    ylims = ylims, modus = modus, ci = ci,
+                    leg_labs = leg_labs, leg_vals = leg_vals)
+        }
+    }
+    # Get the legend
+    legend <- get_legend(plotlist[[1]])
+    # Arrange
+    nl <- theme(legend.position = "none")
+    gg <- arrangeGrob(arrangeGrob(
+        plotlist[[1]] + nl,
+        plotlist[[2]] + nl,
+        plotlist[[3]] + nl,
+        layout_matrix = matrix(1:3, ncol = 1, byrow = TRUE)), legend,
+            heights = c(10, 1), top = textGrob(title))
+    if (file != FALSE) {
+       ggsave(file, gg, device = cairo_pdf, width = 4, height = 7)
+    } else {
+       gg
     }
 }
 
@@ -354,13 +420,13 @@ plot_full_elec <- function(
 
     nl <- theme(legend.position = "none") # No legend
     nla <- labs(x = "", y = "")
-    ngrid <- theme(panel.background = element_rect(fill=NA, color = NA),
+    ngrid <- theme(panel.background = element_rect(fill = NA, color = NA),
                    panel.grid.major.x = element_blank(),
                    panel.grid.minor.x = element_blank(),
                    panel.grid.major.y = element_blank(),
                    panel.grid.minor.y = element_blank())
-    axes <- theme(axis.line.x = element_line(color = "black", size = 0.2),
-                  axis.line.y = element_line(color = "black", size = 0.2))
+    axes <- theme(axis.line.x = element_line(color = "black", linewidth = 0.2),
+                  axis.line.y = element_line(color = "black", linewidth = 0.2))
     for (i in 1:length(e)) {
         plotlist[[i]] <- plotlist[[i]] + nl + nla + ngrid + axes
     }
@@ -664,7 +730,7 @@ plot_rSPR <- function(
 
     # For all plots
     p <- ggplot(data, aes(x = Region, y = logRT, color = Spec, group = Spec)) +
-            geom_point(size = 2.5, shape = "cross") + geom_line(size = 0.5)
+            geom_point(size = 2.5, shape = "cross") + geom_line(linewidth = 0.5)
     p <- p + theme_minimal()
     p <- p + geom_errorbar(aes(ymin = logRT - logRT_CI,
                 ymax = logRT + logRT_CI), width = .1, size = 0.3)

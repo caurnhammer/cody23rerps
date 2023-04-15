@@ -41,7 +41,7 @@ ci <- function(vec) {
 
 # Load data of Aurnhammer et al. (2021)
 dt <- fread("../data/adsbc21_data.csv")
-elec <- "Pz"
+elec <- c("Fz", "Cz", "Pz")
 cond <- c("A", "C")
 # Condition plotting properties
 cond_labels <- c("A: Expected", "C: Unexpected")
@@ -55,6 +55,7 @@ quart_values <- c("#E69F00", "black", "#009E73")
 ############################
 n <- 4
 dt_condc <- dt[Condition %in% cond, ]
+set.seed(420)
 rand_trials <- sample(dt_condc$TrialNum, n)
 dt_rtrials <- dt_condc[TrialNum %in% rand_trials,]
 dt_rtrials$TrialNum <- factor(dt_rtrials$TrialNum)
@@ -89,12 +90,13 @@ dt_c_s <- dt[Condition %in% c("A", "C"), lapply(.SD, mean),
     by = list(Subject, Condition, Timestamp), .SDcols = elec]
 dt_c <- dt_c_s[Condition %in% c("A", "C"), lapply(.SD, mean),
     by = list(Condition, Timestamp), .SDcols = elec]
-dt_c$Pz_CI <- dt_c_s[Condition %in% c("A", "C"), lapply(.SD, ci),
-    by = list(Condition, Timestamp), .SDcols = elec][,..elec]
+dt_c[, paste0(elec, "_CI")] <- dt_c_s[Condition %in% c("A", "C"),
+    lapply(.SD, ci),
+    by = list(Condition, Timestamp), .SDcols = elec][, ..elec]
 dt_c$Spec <- dt_c$Condition
-plot_single_elec(dt_c, elec,
-    file = paste0("../plots/Subtraction/adsbc21_AC_Pz.pdf"),
-    modus = "Condition", ylims = c(9, -5),
+plot_midline(dt_c, elec,
+    file = paste0("../plots/Subtraction/adsbc21_AC_Midline.pdf"),
+    modus = "Condition", ylims = c(9, -6),
     leg_labs = cond_labels, leg_vals = cond_values)
 
 #####################################
@@ -165,8 +167,7 @@ pcor.test(n4p6seg$N400, n4p6seg$P600, n4p6seg$Segment)
 # DELOGU ET AL 2019 #
 #####################
 dt <- fread("../data/dbc19_data.csv")
-elec <- "Pz"
-cond <- "C"
+elec <- c("Fz", "Cz", "Pz")
 # Condition plotting properties
 cond_labels <- c("Baseline", "Event-rel.", "Event-unrel.")
 cond_values <- c("black", "red", "blue")
@@ -176,10 +177,10 @@ dt_s <- dt[, lapply(.SD, mean),
     by = list(Subject, Condition, Timestamp), .SDcols = elec]
 dt_avg <- dt_s[, lapply(.SD, mean),
     by = list(Condition, Timestamp), .SDcols = elec]
-dt_avg$Pz_CI <- dt_s[, lapply(.SD, ci),
-    by = list(Condition, Timestamp), .SDcols = elec][,..elec]
+dt_avg[, paste0(elec, "_CI")] <- dt_s[, lapply(.SD, ci),
+    by = list(Condition, Timestamp), .SDcols = elec][, ..elec]
 dt_avg$Spec <- dt_avg$Condition
-plot_single_elec(dt_avg, elec,
-    file = paste0("../plots/Subtraction/dbc19_Pz.pdf"),
-    modus = "Condition", ylims = c(9, -5),
+plot_midline(dt_avg, elec,
+    file = paste0("../plots/Subtraction/dbc19_Midline.pdf"),
+    modus = "Condition", ylims = c(9, -6),
     leg_labs = cond_labels, leg_vals = cond_values)
