@@ -68,11 +68,10 @@ plot_grandavg_ci <- function(
             color = Spec, fill = Spec)) + geom_line()
     }
     else if (modus %in% c("Condition", "Quantile")) {
-        p <- ggplot(df, aes_string(x = "Timestamp", y = "V",
-            color = modus, fill = modus)) + geom_line()
-    } else if (modus == "ConditionQuantile") {
-        p <- ggplot(df, aes_string(x = "Timestamp", y = "V",
-            color = "Condition", linetype = "Spec")) + geom_line()
+        # p <- ggplot(df, aes_string(x = "Timestamp", y = "V",
+        #     color = modus, fill = modus)) + geom_line()
+        p <- ggplot(df, aes(x = Timestamp, y = V,
+            color = df[[modus]], fill = df[[modus]])) + geom_line()
     }
 
     # For all plots
@@ -597,16 +596,16 @@ generate_topo <- function(
     p <- p + theme_topo()
     p <- p + labs(title = title, subtitle = paste0(tw[1], "-", tw[2], "ms"))
     p <- p + geom_path(data = mask_ring, aes(x, y, z = NULL, fill = NULL),
-              colour = "white", size = 6)
+              colour = "white", linewidth = 6)
     p <- p + scale_fill_gradientn(colours = my_spectrum(10),
                     limits = amplim_plusmin, guide = "colourbar",
                     oob = scales::squish, name = label)
     # Add electrode positions
     p <- p + geom_point(data = data_diff_locs, aes(x, y), size = 1)
     p <- p + geom_path(data = head_shape, aes(x, y, z = NULL, fill = NULL),
-                       size = 1.5)
+                       linewidth = 1.5)
     p <- p + geom_path(data = nose, aes(x, y, z = NULL, fill = NULL),
-                       size = 1.5)
+                        linewidth = 1.5)
     p <- p + coord_equal()
     if (omit_legend) {
         if (save_legend) {
@@ -691,12 +690,12 @@ items_and_means <- function(data, Predictor) {
 
 plot_density <- function(data, data_means, ylab, xlab, predictor,
                         leg_labs, leg_vals, ylimits, xbreaks) {
-    p <- ggplot(data, aes_string(x = predictor, color = "Condition",
-                fill = "Condition"))
+    p <- ggplot(data, aes(x = data[[predictor]], color = Condition,
+                fill = Condition))
     p <- p + geom_density(alpha = 0.4) + theme_minimal()
     p <- p + ylim(ylimits)
-    p <- p + geom_vline(data = data_means, aes_string(xintercept = predictor,
-                color = "Condition"), linetype = "dashed")
+    p <- p + geom_vline(data = data_means, aes(xintercept = .data[[predictor]],
+                color = Condition), linetype = "dashed")
     p <- p + scale_color_manual(labels = leg_labs, values = leg_vals)
     p <- p + scale_fill_manual(labels = leg_labs, values = leg_vals)
     p <- p + scale_x_continuous(name = xlab, breaks = xbreaks)
@@ -733,7 +732,7 @@ plot_rSPR <- function(
             geom_point(size = 2.5, shape = "cross") + geom_line(linewidth = 0.5)
     p <- p + theme_minimal()
     p <- p + geom_errorbar(aes(ymin = logRT - logRT_CI,
-                ymax = logRT + logRT_CI), width = .1, size = 0.3)
+                ymax = logRT + logRT_CI), width = .1, linewidth = 0.3)
     # Conditional modifications 
     if (modus == "coefficients") { # coefficients
         p <- p + scale_color_manual(name = "Coefficients",
