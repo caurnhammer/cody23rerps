@@ -53,7 +53,7 @@ make_plots <- function(
         "Pz",
         file = paste0("../plots/", file,  "/Observed_Pz.pdf"),
         modus = "Condition",
-        ylims = c(8.5, -5),
+        ylims = c(9.5, -5),
         leg_labs = data_labs,
         leg_vals = data_vals)
     plot_midline(
@@ -61,7 +61,7 @@ make_plots <- function(
         elec,
         file = paste0("../plots/", file,  "/Observed_Midline.pdf"),
         modus = "Condition",
-        ylims = c(8.5, -5),
+        ylims = c(9.5, -5),
         leg_labs = data_labs,
         leg_vals = data_vals)
 
@@ -80,7 +80,7 @@ make_plots <- function(
             file = paste0("../plots/", file, "/Estimated_", name, "_Pz.pdf"),
             title = paste0("Estimates ", pred[i]),
             modus = "Condition",
-            ylims = c(8.5, -5),
+            ylims = c(9.5, -5),
             leg_labs = data_labs,
             leg_vals = data_vals,
             ci = TRUE)
@@ -91,7 +91,7 @@ make_plots <- function(
                 name, "_Midline.pdf"),
             title = paste0("Estimates ", pred[i]),
             modus = "Condition",
-            ylims = c(8.5, -5),
+            ylims = c(9.5, -5),
             leg_labs = data_labs,
             leg_vals = data_vals,
             ci = TRUE)

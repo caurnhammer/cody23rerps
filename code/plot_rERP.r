@@ -216,7 +216,6 @@ plot_single_elec <- function(
     }
 }
 
-
 # Plot three midline electrodes
 plot_midline <- function(
     data,
